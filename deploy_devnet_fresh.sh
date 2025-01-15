@@ -91,6 +91,7 @@ dfx identity new --storage-mode=plaintext minting || true
 echo "Creating and deploying canister..."
 dfx canister create context_contract
 dfx canister create ledger
+dfx canister create mock_external
 
 # Get the context ID
 CONTEXT_ID=$(dfx canister id context_contract)
@@ -108,14 +109,6 @@ echo "Done! Cycles transferred to context contract: $CONTEXT_ID"
 # Get the IDs
 CONTEXT_ID=$(dfx canister id context_contract)
 LEDGER_ID=$(dfx canister id ledger)
-
-# Build contracts
-echo "Building contracts..."
-cd "$(dirname $0)"
-./build.sh
-cd ../context-proxy
-./build.sh
-cd ../context-config
 
 # Prepare ledger initialization argument
 LEDGER_INIT_ARG="(variant { Init = record { 
@@ -144,11 +137,14 @@ dfx canister install ledger --mode=install --argument "$LEDGER_INIT_ARG"
 LEDGER_ID=$(dfx canister id ledger)
 dfx canister install context_contract --mode=install --argument "(principal \"${LEDGER_ID}\")"
 
+# Install mock external canister
+dfx canister install mock_external --mode=install --argument "(principal \"${LEDGER_ID}\")"
+
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Build path relative to the script location
-WASM_FILE="${SCRIPT_DIR}/../context-proxy/res/calimero_context_proxy_icp.wasm"
+WASM_FILE="${SCRIPT_DIR}/context-proxy/calimero_context_proxy_icp.wasm"
 
 # Verify file exists
 if [ ! -f "$WASM_FILE" ]; then
