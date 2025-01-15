@@ -1,14 +1,20 @@
 {
   "canisters": {
     "context_contract": {
-      "package": "calimero-context-config-icp",
-      "candid": "./res/calimero_context_config_icp.did",
-      "type": "rust"
+      "type": "custom",
+      "candid": "./context-config/calimero_context_config_icp.did",
+      "wasm": "./context-config/calimero_context_config_icp.wasm"
     },
     "ledger": {
       "type": "custom",
       "wasm": "https://download.dfinity.systems/ic/aba60ffbc46acfc8990bf4d5685c1360bd7026b9/canisters/ledger-canister.wasm.gz",
       "candid": "https://raw.githubusercontent.com/dfinity/ic/aba60ffbc46acfc8990bf4d5685c1360bd7026b9/rs/ledger_suite/icp/ledger.did"
+    },
+    "mock_external": {
+      "type": "custom",
+      "package": "calimero-mock-external",
+      "candid": "./context-proxy/mock/external/calimero_mock_external_icp.did",
+      "wasm": "./context-proxy/mock/external/calimero_mock_external_icp.wasm"
     }
   },
   "defaults": {
@@ -23,9 +29,6 @@
       "type": "persistent"
     }
   },
-  "routing_table": {
-    "start_canister_id": "aaaaa-aa",
-    "end_canister_id": "zzzzz-zz"
-  },
+  "output_env_file": ".env",
   "version": 1
 }

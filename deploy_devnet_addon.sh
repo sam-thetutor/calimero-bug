@@ -36,70 +36,41 @@ for cmd in $REQUIRED_COMMANDS; do
     fi
 done
 
-
-dfxvm default 0.24.3
-
-# Stop dfx and clean up all state
-dfx stop
-rm -rf .dfx
-rm -rf ~/.config/dfx/replica-configuration/
-rm -rf ~/.config/dfx/identity/minting
-rm -rf ~/.config/dfx/identity/initial
-rm -rf ~/.config/dfx/identity/archive
-rm -rf ~/.cache/dfinity/
-rm -rf ~/.config/dfx/
-dfxvm default 0.24.3
-# Remove canister_ids.json if it exists
-if [ -f "canister_ids.json" ]; then
-    rm canister_ids.json
-fi
-
 # Generate minting account
-dfx identity new minting --storage-mode=plaintext || true
-dfx identity use minting
+dfx identity new minting_ledger --storage-mode=plaintext || true
+dfx identity use minting_ledger
 MINTING_PRINCIPAL=$(dfx identity get-principal)
 MINTING_ACCOUNT=$(get_account_id "$MINTING_PRINCIPAL")
 
 # Generate initial account
-dfx identity new initial --storage-mode=plaintext || true
-dfx identity use initial
+dfx identity new initial_ledger --storage-mode=plaintext || true
+dfx identity use initial_ledger
 INITIAL_PRINCIPAL=$(dfx identity get-principal)
 INITIAL_ACCOUNT=$(get_account_id "$INITIAL_PRINCIPAL")
 
 # Generate archive controller account
-dfx identity new archive --storage-mode=plaintext || true
-dfx identity use archive
+dfx identity new archive_ledger --storage-mode=plaintext || true
+dfx identity use archive_ledger
 ARCHIVE_PRINCIPAL=$(dfx identity get-principal)
 
-# Generate test recipient account
-dfx identity new recipient --storage-mode=plaintext || true
-dfx identity use recipient
-RECIPIENT_PRINCIPAL=$(dfx identity get-principal)
+echo "Finished generating identities"
 
 # Switch back to default identity
-dfx identity use default
-
-# Start dfx with clean state
-dfx start --clean --background
-
-dfx identity use default
-
-# Create initial identity if needed
-dfx identity new --storage-mode=plaintext minting || true
-# dfx identity use minting
+dfx identity use initial_ledger
 
 echo "Creating and deploying canister..."
+
 dfx canister create context_contract
 dfx canister create ledger
+dfx canister create mock_external
 
 # Get the context ID
 CONTEXT_ID=$(dfx canister id context_contract)
 # Get the wallet ID and seed it
 WALLET_ID=$(dfx identity get-wallet)
 
-# abricate cycles for the wallet
+# Fabricate cycles for the wallet
 dfx ledger fabricate-cycles --canister $WALLET_ID --amount 200000
-
 # Transfer cycles from wallet to context contract
 dfx canister deposit-cycles 1000000000000000000 $CONTEXT_ID
 
@@ -108,9 +79,6 @@ echo "Done! Cycles transferred to context contract: $CONTEXT_ID"
 # Get the IDs
 CONTEXT_ID=$(dfx canister id context_contract)
 LEDGER_ID=$(dfx canister id ledger)
-
-# Build contracts
-
 
 # Prepare ledger initialization argument
 LEDGER_INIT_ARG="(variant { Init = record { 
@@ -131,43 +99,42 @@ LEDGER_INIT_ARG="(variant { Init = record {
 
 # Build and install canisters
 dfx build
-dfx canister install context_contract --mode=install
-dfx canister install ledger --mode=install --argument "$LEDGER_INIT_ARG"
 
+# First install the ledger canister
+dfx canister install ledger --mode=reinstall --argument "$LEDGER_INIT_ARG"
+# Get the ledger ID and install context contract with it
+LEDGER_ID=$(dfx canister id ledger)
+
+dfx canister install context_contract --mode=reinstall --argument "(principal \"${LEDGER_ID}\")"
 # Get the directory where the script is located
+dfx canister install mock_external --mode=reinstall --argument "(principal \"${LEDGER_ID}\")"
+MOCK_EXTERNAL_ID=$(dfx canister id mock_external)
+
+# Add proxy code to context contract
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 # Build path relative to the script location
-WASM_FILE="${SCRIPT_DIR}/../context-proxy/res/calimero_context_proxy_icp.wasm"
-
+WASM_FILE="${SCRIPT_DIR}/context-proxy/calimero_context_proxy_icp.wasm"
 # Verify file exists
 if [ ! -f "$WASM_FILE" ]; then
     echo "Error: WASM file not found at: $WASM_FILE"
     exit 1
 fi
-
 # Then modify the script to use a consistent reading method
 WASM_CONTENTS=$(xxd -p "$WASM_FILE" | tr -d '\n' | sed 's/\(..\)/\\\1/g')
-
-TEMP_CMD=$(mktemp)
-echo "(
-  blob \"${WASM_CONTENTS}\",
-  principal \"${LEDGER_ID}\"
-)" > "$TEMP_CMD"
-
 # Execute the command using the temporary file
-dfx canister call context_contract set_proxy_code --argument-file "$TEMP_CMD"
-
-# Clean up
-rm "$TEMP_CMD"
+dfx canister call context_contract set_proxy_code --argument-file <(
+  echo "(
+    blob \"${WASM_CONTENTS}\"
+  )"
+)
 
 # Print all relevant information at the end
 echo -e "\n=== Deployment Summary ==="
 echo "Context Contract ID: ${CONTEXT_ID}"
 echo "Ledger Contract ID: ${LEDGER_ID}"
+echo "Mock External Contract ID: ${MOCK_EXTERNAL_ID}"
 echo -e "\nAccount Information:"
 echo "Minting Account: ${MINTING_ACCOUNT}"
 echo "Initial Account: ${INITIAL_ACCOUNT}"
 echo "Archive Principal: ${ARCHIVE_PRINCIPAL}"
-echo "Recipient Principal: ${RECIPIENT_PRINCIPAL}"
 echo -e "\nDeployment completed successfully!"
