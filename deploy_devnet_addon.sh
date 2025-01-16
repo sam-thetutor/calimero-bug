@@ -132,7 +132,7 @@ dfx canister call context_contract set_proxy_code --argument-file <(
 echo -e "\n=== Deployment Summary ==="
 echo "Context Contract ID: ${CONTEXT_ID}"
 echo "Ledger Contract ID: ${LEDGER_ID}"
-echo "Mock External Contract ID: ${MOCK_EXTERNAL_ID}"
+echo "Demo External Contract ID: ${MOCK_EXTERNAL_ID}"
 echo -e "\nAccount Information:"
 echo "Minting Account: ${MINTING_ACCOUNT}"
 echo "Initial Account: ${INITIAL_ACCOUNT}"

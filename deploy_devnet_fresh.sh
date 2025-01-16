@@ -139,6 +139,7 @@ dfx canister install context_contract --mode=install --argument "(principal \"${
 
 # Install mock external canister
 dfx canister install mock_external --mode=install --argument "(principal \"${LEDGER_ID}\")"
+MOCK_EXTERNAL_ID=$(dfx canister id mock_external)
 
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -166,6 +167,7 @@ dfx canister call context_contract set_proxy_code --argument-file <(
 echo -e "\n=== Deployment Summary ==="
 echo "Context Contract ID: ${CONTEXT_ID}"
 echo "Ledger Contract ID: ${LEDGER_ID}"
+echo "Demo External Contract ID: ${MOCK_EXTERNAL_ID}"
 echo -e "\nAccount Information:"
 echo "Minting Account: ${MINTING_ACCOUNT}"
 echo "Initial Account: ${INITIAL_ACCOUNT}"
