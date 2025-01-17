@@ -1,6 +1,15 @@
 # Internet Computer (ICP) Devnet Setup
 
-This repository provides a script to set up a local ICP devnet environment. The script ensures a clean environment by resetting and configuring `dfx` (Dfinity's SDK) and creating accounts for testing and deployment. It also deploys the necessary contracts for managing contexts and performing cross-contract operations on the Internet Computer.
+This repository provides a scripts to set up a local ICP devnet environment and deploy needed contracts and accounts.
+
+The script does the following:
+- Creates accounts needed for ledger deployment.
+- Deploys the context, ledger and example external contract.
+- Funds the deployed context contract for initial usage.
+- Calls required initial methods on deployed contracts.
+
+You can find `deploy_devnet_addon.sh` script which deploys the contracts and creates needed account 
+on already existing dfx environment and also `deploy_devnet_fresh.sh` which starts fresh dfx environment and deploys the contracts.
 
 ## Documentation
 
@@ -25,7 +34,7 @@ Make sure you have the following tools installed:
 
 ## Script Workflow
 
-The script (`./context-config/deploy_devnet.sh`) performs the following steps:
+The script (`./deploy_devnet_fresh.sh`) performs the following steps:
 
 ### 1. Configure `dfx`
 - Sets the `dfxvm` value.
@@ -41,7 +50,7 @@ Once the `dfx` instance is running, the script creates four accounts:
 - **Recipient**: A test wallet for testing transfer functionality from the proxy contract.
 
 ### 3. Deploy Contracts
-The script deploys the following contracts, as described in `/core/contracts/icp/context-config/dfx.json`:
+The script deploys the following contracts, as described in `/context-config/dfx.json`:
 - **Context Config Contract**: Manages Calimero contexts.
 - **Ledger Contract**: Implements token-related functionalities.
 - **Proxy Contract**: Used for creating proposals to:
@@ -56,7 +65,7 @@ The script deploys the following contracts, as described in `/core/contracts/icp
 Run the setup script by executing the following command in your terminal:
 
 ```bash
-$: ./context-config/deploy_devnet.sh
+$: ./deploy_devnet_fresh.sh
 
 ...
 
