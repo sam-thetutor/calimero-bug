@@ -1,5 +1,9 @@
 {
   "canisters": {
+    "backend": {
+        "main": "backend/main.mo",
+        "type": "motoko"
+      },
     "context_contract": {
       "type": "custom",
       "candid": "./context-config/calimero_context_config_icp.did",
