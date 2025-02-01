@@ -63,6 +63,8 @@ echo "Creating and deploying canister..."
 dfx canister create context_contract
 dfx canister create ledger
 dfx canister create mock_external
+dfx canister create backend
+
 
 # Get the context ID
 CONTEXT_ID=$(dfx canister id context_contract)
